@@ -1,0 +1,60 @@
+# Entornos virtuales
+venv/
+env/
+ENV/
+
+# Archivos de configuración de entornos virtuales
+*.env
+*.venv
+
+# Bytecode de Python
+__pycache__/
+*.py[cod]
+
+# Archivos de logs
+*.log
+*.out
+*.err
+
+# Archivos temporales
+*.tmp
+*.temp
+*.swp
+*.swo
+*.~*
+
+# Configuración de IDEs/editores
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Archivos de Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Archivos creados por herramientas de empaquetado
+*.egg
+*.egg-info/
+dist/
+build/
+pip-wheel-metadata/
+
+# Archivos generados por pruebas
+htmlcov/
+.tox/
+.nox/
+.coverage
+*.coverage
+*.cover
+.cache/
+pytest_cache/
+
+# Archivos de base de datos SQLite
+*.sqlite3
+
+# Archivos de Docker
+docker-compose.override.yml
+
+# Configuración de macOS y Linux
+.DS_Store
+*.orig
+Thumbs.db
