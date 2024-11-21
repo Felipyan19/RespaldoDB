@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  login:
+    image: mysql:8.0
+    container_name: login_mysql_container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: crud_db
+      MYSQL_USER: crud_user
+      MYSQL_PASSWORD: crudpassword
+    ports:
+      - "3306:3306"  
+    volumes:
+      - mysql_data_login:/var/lib/mysql  
+    networks:
+      - app_network
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: crud_db
+      MYSQL_USER: crud_user
+      MYSQL_PASSWORD: crudpassword
+    ports:
+      - "3307:3306"  
+    volumes:
+      - mysql_data_mysql:/var/lib/mysql  
+    networks:
+      - app_network
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb_container
+    restart: always
+    ports:
+      - "27017:27017"  
+    volumes:
+      - mongo_data:/data/db 
+    networks:
+      - app_network
+
+volumes:
+  mysql_data_login:  
+  mysql_data_mysql:  
+  mongo_data:        
+
+networks:
+  app_network:
+    driver: bridge  
