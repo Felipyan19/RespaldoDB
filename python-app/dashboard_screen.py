@@ -4,15 +4,16 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QTabWidget, QTableWidg
 from PyQt5.QtCore import Qt, QByteArray
 from PyQt5.QtGui import QPixmap
 import pandas as pd
-import fitz  # PyMuPDF para manejar archivos PDF
+import fitz  
 import re
-from conect import conectar_mysql, conectar_mongo  # Importamos las funciones de conexión
+from conect import conectar_mysql, conectar_mongo  
 
 class DashboardScreen(QWidget):
     def __init__(self):
-        super().__init__()
+        self.selected_data = None
+        self.selected_edit_data = None
 
-        global id_selected
+        super().__init__()
 
         self.tab_widget = QTabWidget(self)
 
@@ -30,10 +31,21 @@ class DashboardScreen(QWidget):
 
         self.tab_widget.currentChanged.connect(self.on_tab_change)
         
-
     def on_tab_change(self, index):
-        if index == 0:  # Índice de la pestaña 1
+        if index == 0:
             self.populate_table()
+        elif index == 2:
+            self.update_selected_row_label()
+
+    def update_selected_row_label(self):
+        if self.selected_data is not None:
+            self.selected_row_label.setText(f"Registro seleccionado: {self.selected_data["numero_identidad"]}")
+            for key, value in self.selected_data.items():
+                self.selected_edit_data[key].setText(value)
+
+        else:
+            self.selected_row_label.setText("No se ha seleccionado ninguna fila")
+
 
     def create_tab_1(self):
         widget = QWidget()
@@ -70,59 +82,58 @@ class DashboardScreen(QWidget):
         self.table.setHorizontalHeaderLabels(list(df_final.columns) + ['Acción'])
 
         def handle_details(row):
-            print(self.id_selected)
-            self.tab_widget.setCurrentIndex(2)
+            self.selected_data = {
+                "nombre": df_final.iloc[row]["nombre"],
+                "numero_identidad": df_final.iloc[row]["numero_identidad"],
+                "tipo_identidad": df_final.iloc[row]["tipo_identidad"],
+                "direccion": df_final.iloc[row]["direccion"],
+                "foto": df_final.iloc[row]["foto"],
+                "cargo": df_final.iloc[row]["cargo"],
+                "hv": df_final.iloc[row]["hv"]
+            }
+            self.tab_widget.setCurrentIndex(2)  # Cambiar a la pestaña 3
+            self.update_selected_row_label()
 
-
-        # Ahora en el ciclo, puedes hacer lo siguiente:
         for i in range(df_final.shape[0]):
             for j in range(df_final.shape[1]):
                 cell_value = str(df_final.iloc[i, j])
 
                 if "data:image" in cell_value:
                     try:
-                        # Extraer y agregar padding si es necesario
-                        img_data = cell_value.split(',')[1]  # Extraer la parte base64
-                        padding = '=' * (4 - len(img_data) % 4)  # Añadir el padding necesario
+                        
+                        img_data = cell_value.split(',')[1]  
+                        padding = '=' * (4 - len(img_data) % 4)  
                         img_data = base64.b64decode(img_data + padding)
 
-                        # Convertir los datos en una QPixmap
                         pixmap = QPixmap()
                         pixmap.loadFromData(QByteArray(img_data))
 
-                        # Ajustar el tamaño de la imagen para que se ajuste a la celda
                         pixmap = pixmap.scaled(self.table.columnWidth(j), self.table.rowHeight(i), Qt.KeepAspectRatio, Qt.SmoothTransformation)
                         
-                        # Crear un QLabel para mostrar la imagen
                         label = QLabel()
                         label.setPixmap(pixmap)
-                        label.setAlignment(Qt.AlignCenter)  # Centrar la imagen
+                        label.setAlignment(Qt.AlignCenter)  
 
-                        # Colocar el QLabel en la celda de la tabla
                         self.table.setCellWidget(i, j, label)
                     except (binascii.Error, IndexError) as e:
                         print(f"Error al decodificar la imagen: {e}")
-                        self.table.setItem(i, j, QTableWidgetItem(cell_value))  # Colocar texto en lugar de la imagen
-                        
-                # Si es un archivo PDF (base64)
+                        self.table.setItem(i, j, QTableWidgetItem(cell_value)) 
+
                 elif "data:application/pdf" in cell_value:
                     try:
-                        match = re.search(r'name=([^;]+)', cell_value)  # Busca el nombre en la cadena
+                        match = re.search(r'name=([^;]+)', cell_value)  
                         if match:
-                            pdf_name = match.group(1)  # Extraemos el nombre del archivo
+                            pdf_name = match.group(1)  
                         else:
-                            pdf_name = "Hoja de Vida"  # Si no se encuentra el nombre, asignamos un nombre por defecto
+                            pdf_name = "Hoja de Vida"  
                         
-                        # Guardamos la URI base64 completa para la celda en la tabla
                         self.table.setItem(i, j, QTableWidgetItem(pdf_name))
-                        self.table.item(i, j).setData(1000, cell_value)  # Establecemos los datos personalizados para la celda (base64 PDF)
-
-                        # Conectamos el evento de clic en la celda
+                        self.table.item(i, j).setData(1000, cell_value)  
                         self.table.cellClicked.connect(self.handle_cell_click)
 
                     except Exception as e:
                         print(f"Error al decodificar el archivo PDF: {e}")
-                        self.table.setItem(i, j, QTableWidgetItem(cell_value))  # Colocar texto en lugar del nombre del archivo
+                        self.table.setItem(i, j, QTableWidgetItem(cell_value)) 
                 else:
                     self.table.setItem(i, j, QTableWidgetItem(cell_value))
 
@@ -156,27 +167,37 @@ class DashboardScreen(QWidget):
     def create_tab_2(self):
         widget = QWidget()
         layout = QVBoxLayout()
-        
-        # Campos de entrada
-        self.name_input = QLineEdit()
-        self.name_input.setPlaceholderText("Nombre")
-        layout.addWidget(self.name_input)
 
-        self.id_input = QLineEdit()
-        self.id_input.setPlaceholderText("Número de Identidad")
-        layout.addWidget(self.id_input)
+        # Crear un diccionario para almacenar todos los datos
+        self.selected_data = {
+            "nombre": QLineEdit(),
+            "numero_identidad": QLineEdit(),
+            "tipo_identidad": QLineEdit(),
+            "direccion": QLineEdit(),
+            "foto": QLineEdit(),
+            "cargo": QLineEdit(),
+            "hv": QLineEdit()
+        }
 
-        self.type_id_input = QLineEdit()
-        self.type_id_input.setPlaceholderText("Tipo de Identidad")
-        layout.addWidget(self.type_id_input)
+        # Configurar el campo "nombre"
+        self.selected_data["nombre"].setPlaceholderText("Nombre")
+        layout.addWidget(self.selected_data["nombre"])
 
-        self.address_input = QLineEdit()
-        self.address_input.setPlaceholderText("Dirección")
-        layout.addWidget(self.address_input)
+        # Configurar el campo "numero_identidad"
+        self.selected_data["numero_identidad"].setPlaceholderText("Número de Identidad")
+        layout.addWidget(self.selected_data["numero_identidad"])
 
-        self.cargo_input = QLineEdit()
-        self.cargo_input.setPlaceholderText("Cargo")
-        layout.addWidget(self.cargo_input)
+        # Configurar el campo "tipo_identidad"
+        self.selected_data["tipo_identidad"].setPlaceholderText("Tipo de Identidad")
+        layout.addWidget(self.selected_data["tipo_identidad"])
+
+        # Configurar el campo "direccion"
+        self.selected_data["direccion"].setPlaceholderText("Dirección")
+        layout.addWidget(self.selected_data["direccion"])
+
+        # Configurar el campo "cargo"
+        self.selected_data["cargo"].setPlaceholderText("Cargo")
+        layout.addWidget(self.selected_data["cargo"])
 
         # Botón para cargar foto
         self.photo_data = None  # Para almacenar la foto en base64
@@ -214,16 +235,20 @@ class DashboardScreen(QWidget):
             QMessageBox.information(self, "HV Cargada", "La hoja de vida se ha cargado correctamente.")
 
     def save_record(self):
+
         record = {
-            "nombre": self.name_input.text(),
-            "numero_identidad": self.id_input.text(),
-            "tipo_identidad": self.type_id_input.text(),
-            "direccion": self.address_input.text(),
-            "cargo": self.cargo_input.text(),
+            "nombre": self.selected_data["nombre"].text(),
+            "numero_identidad": self.selected_data["numero_identidad"].text(),
+            "tipo_identidad": self.selected_data["tipo_identidad"].text(),
+            "direccion": self.selected_data["direccion"].text(),
+            "cargo": self.selected_data["cargo"].text(),
             "foto": f"data:image/jpeg;base64,{self.photo_data}" if self.photo_data else None,
             "hv": f"data:application/pdf;name={self.hv_name};base64,{self.hv_data}" if self.hv_data else None
         }
 
+        if not record["nombre"] or not record["numero_identidad"] or not record["tipo_identidad"]:
+            QMessageBox.warning(self, "Error", "Todos los campos obligatorios deben ser llenados.")
+            return
             # Conexión a la base de datos MySQL
         mysql_db = conectar_mysql()
 
@@ -256,73 +281,39 @@ class DashboardScreen(QWidget):
         QMessageBox.information(self, "Registro Guardado", "El registro se ha guardado correctamente.")
 
     def create_tab_3(self):
+        
         widget = QWidget()
         layout = QVBoxLayout()
 
-        # Crear los campos de entrada para mostrar los datos del empleado
-        self.name_input = QLineEdit()
-        self.name_input.setPlaceholderText("Nombre")
-        layout.addWidget(self.name_input)
+        self.selected_edit_data = {
+            "nombre": QLineEdit(),
+            "numero_identidad": QLineEdit(),
+            "tipo_identidad": QLineEdit(),
+            "direccion": QLineEdit(),
+            "foto": QLineEdit(),
+            "cargo": QLineEdit(),
+            "hv": QLineEdit()
+        }
 
-        self.id_input = QLineEdit()
-        self.id_input.setPlaceholderText("Número de Identidad")
-        layout.addWidget(self.id_input)
+        self.selected_row_label = QLabel()
 
-        self.type_id_input = QLineEdit()
-        self.type_id_input.setPlaceholderText("Tipo de Identidad")
-        layout.addWidget(self.type_id_input)
+        submit_button = QPushButton("Actualizar Registro")
+        submit_button.clicked.connect(self.update_record)
 
-        self.address_input = QLineEdit()
-        self.address_input.setPlaceholderText("Dirección")
-        layout.addWidget(self.address_input)
-
-        self.cargo_input = QLineEdit()
-        self.cargo_input.setPlaceholderText("Cargo")
-        layout.addWidget(self.cargo_input)
-
-        
-
+        layout.addWidget(self.selected_row_label)
+        layout.addWidget(self.selected_edit_data["nombre"])
+        layout.addWidget(self.selected_edit_data["numero_identidad"])
+        layout.addWidget(self.selected_edit_data["tipo_identidad"])
+        layout.addWidget(self.selected_edit_data["direccion"])
+        layout.addWidget(self.selected_edit_data["cargo"])
+        layout.addWidget(self.selected_edit_data["hv"])
+        layout.addWidget(submit_button)
         widget.setLayout(layout)
-        return widget
+        return widget    
+    def update_record(self):
 
-    def fetch_data_by_id(self, id_selected):
-        print(id_selected)
-        """Busca los datos del empleado con el id_selected y los carga en los campos de entrada."""
-        mysql_db = conectar_mysql()
+        record = {
+            "nombre": self.selected_edit_data["nombre"].text(),
+        }  
 
-        if mysql_db:
-            try:
-                cursor = mysql_db.cursor()
-                query = """
-                    SELECT nombre, numero_identidad, tipo_identidad, direccion, foto, cargo, hv
-                    FROM empleados
-                    WHERE numero_identidad = %s
-                """
-                cursor.execute(query, (id_selected,))
-                result = cursor.fetchone()  # Obtiene una fila de la base de datos
-
-                if result:
-                    # Si encontramos resultados, los mostramos en los campos de entrada
-                    self.name_input.setText(result[0])
-                    self.id_input.setText(result[1])
-                    self.type_id_input.setText(result[2])
-                    self.address_input.setText(result[3])
-                    self.cargo_input.setText(result[5])
-
-                    # Si hay una foto (base64), también puedes manejarla aquí
-                    if result[4]:  # foto
-                        self.photo_data = result[4]
-                    
-                    # Si hay un archivo de hoja de vida (base64), también puedes manejarlo aquí
-                    if result[6]:  # hv
-                        self.hv_data = result[6]
-
-                else:
-                    QMessageBox.warning(self, "No Encontrado", "No se encontraron datos para este ID.")
-
-            except Exception as e:
-                print(f"Error al buscar el empleado: {e}")
-                QMessageBox.critical(self, "Error", "No se pudo realizar la búsqueda.")
-            finally:
-                cursor.close()
-                mysql_db.close()
+        print(record)
