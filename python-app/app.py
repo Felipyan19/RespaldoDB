@@ -10,7 +10,7 @@ class LoginApp(QWidget):
         super().__init__()
 
         self.setWindowTitle('Login - PyQt')
-        self.setFixedSize(500, 300)  
+        self.setFixedSize(1100, 700)  
         self.setStyleSheet("background-color: #f0f0f0;")  
 
         self.center()
