@@ -1,8 +1,9 @@
 import mysql.connector
 from mysql.connector import Error
+from pymongo import MongoClient
 
 def seed_database_login():
-    conexion = None  # Inicializar fuera del bloque try
+    conexion = None
     try:
         # Conexión a MySQL
         conexion = mysql.connector.connect(
@@ -40,21 +41,21 @@ def seed_database_login():
                 cursor.executemany(
                     "INSERT INTO usuarios (usuario, contrasena) VALUES (%s, %s)", usuarios
                 )
-                print("Datos insertados correctamente en Login.")
+                print("Datos insertados correctamente en Login (MySQL).")
             else:
-                print("La base de datos ya contiene datos en Login.")
+                print("La base de datos ya contiene datos en Login (MySQL).")
 
             conexion.commit()
             cursor.close()
 
     except Error as e:
-        print(f"Error al conectar a la base de datos: {e}")
+        print(f"Error al conectar a la base de datos MySQL: {e}")
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
-            print("Conexión cerrada.")
+            print("Conexión MySQL cerrada.")
 
-def seed_database_MySQL():
+def seed_database_mysql():
     conexion = None
     try:
         # Conexión a MySQL
@@ -94,20 +95,49 @@ def seed_database_MySQL():
                 cursor.executemany(
                     "INSERT INTO empleados (nombre, numero_identidad, tipo_identidad, direccion, foto, cargo, hv) VALUES (%s, %s, %s, %s, %s, %s, %s)", empleados
                 )
-                print("Datos insertados correctamente en MySQL.")
+                print("Datos insertados correctamente en empleados (MySQL).")
             else:
-                print("La base de datos ya contiene datos en MySQL.")
+                print("La base de datos ya contiene datos en empleados (MySQL).")
 
             conexion.commit()
             cursor.close()
 
     except Error as e:
-        print(f"Error al conectar a la base de datos: {e}")
+        print(f"Error al conectar a la base de datos MySQL: {e}")
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
-            print("Conexión cerrada.")
+            print("Conexión MySQL cerrada.")
+
+def seed_database_mongo():
+    try:
+        # Conexión a MongoDB
+        client = MongoClient('mongodb://localhost:27017/')
+        db = client['crud_db']
+
+        # Crear colección de usuarios
+        empleados = db['empleados']
+
+
+        # Insertar datos de ejemplo en la colección 'empleados'
+        empleados_data = [
+            {'nombre': 'Pedro', 'numero_identidad': '123456789', 'tipo_identidad': 'CC', 'direccion': 'Calle 123', 'foto': None, 'cargo': 'Gerente', 'hv': None}
+        ]
+
+        if empleados.count_documents({}) == 0:
+            empleados.insert_many(empleados_data)
+            print("Datos insertados correctamente en empleados (MongoDB).")
+        else:
+            print("La base de datos ya contiene datos en empleados (MongoDB).")
+
+        client.close()
+
+    except Exception as e:
+        print(f"Error al conectar a la base de datos MongoDB: {e}")
+    finally:
+        print("Conexión MongoDB cerrada.")
 
 if __name__ == "__main__":
     seed_database_login()
-    seed_database_MySQL()
+    seed_database_mysql()
+    seed_database_mongo()
