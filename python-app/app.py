@@ -1,9 +1,11 @@
-# app.py
 import sys
 import mysql.connector
+import threading
+import time
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QStackedWidget
 from login_screen import LoginScreen
 from dashboard_screen import DashboardScreen
+from model import sync_data
 
 class LoginApp(QWidget):
     def __init__(self):
@@ -29,6 +31,9 @@ class LoginApp(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(self.stacked_widget)
         self.setLayout(layout)
+
+        self.tarea_thread = threading.Thread(target=sync_data, daemon=True)
+        self.tarea_thread.start()
 
     def setup_login_screen(self):
         """Configurar la pantalla de login"""
