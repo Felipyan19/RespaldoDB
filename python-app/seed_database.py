@@ -1,6 +1,10 @@
 import mysql.connector
 from mysql.connector import Error
 from pymongo import MongoClient
+import uuid  # Importa la librería para generar un id único
+
+# Generar un id compartido para respaldo
+id_respaldo = str(uuid.uuid4())  # Genera un UUID único en formato de cadena
 
 def seed_database_login():
     conexion = None
@@ -19,7 +23,7 @@ def seed_database_login():
             cursor.execute("CREATE DATABASE IF NOT EXISTS crud_db")
             cursor.execute("USE crud_db")
             
-            # Crear tabla de usuarios
+            # Crear tabla de usuarios con id_Respaldo
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS usuarios (
                     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -28,22 +32,21 @@ def seed_database_login():
                 )
             """)
             
+            # Eliminar datos existentes
+            cursor.execute("DELETE FROM usuarios")
+            print("Datos eliminados en usuarios (MySQL).")
+            
             # Insertar datos de ejemplo
             usuarios = [
-                ('admin', 'admin123'),
-                ('usuario1', 'password123'),
-                ('usuario2', 'mypassword')
+                ( 'admin', 'admin123'),
+                ( 'usuario1', 'password123'),
+                ( 'usuario2', 'mypassword')
             ]
             
-            # Insertar datos si la tabla está vacía
-            cursor.execute("SELECT COUNT(*) FROM usuarios")
-            if cursor.fetchone()[0] == 0:
-                cursor.executemany(
-                    "INSERT INTO usuarios (usuario, contrasena) VALUES (%s, %s)", usuarios
-                )
-                print("Datos insertados correctamente en Login (MySQL).")
-            else:
-                print("La base de datos ya contiene datos en Login (MySQL).")
+            cursor.executemany(
+                "INSERT INTO usuarios ( usuario, contrasena) VALUES (%s, %s)", usuarios
+            )
+            print("Datos insertados correctamente en Login (MySQL).")
 
             conexion.commit()
             cursor.close()
@@ -55,7 +58,7 @@ def seed_database_login():
             conexion.close()
             print("Conexión MySQL cerrada.")
 
-def seed_database_mysql():
+def seed_database_mysql(id_respaldo):
     conexion = None
     try:
         # Conexión a MySQL
@@ -70,10 +73,11 @@ def seed_database_mysql():
         if conexion.is_connected():
             cursor = conexion.cursor()
             
-            # Crear tabla de empleados
+            # Crear tabla de empleados con id_Respaldo
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS empleados (
                     id INT AUTO_INCREMENT PRIMARY KEY,
+                    id_Respaldo VARCHAR(36) NOT NULL,
                     nombre VARCHAR(50) NOT NULL UNIQUE,
                     numero_identidad VARCHAR(20) NOT NULL UNIQUE,
                     tipo_identidad VARCHAR(20) NOT NULL,
@@ -84,20 +88,19 @@ def seed_database_mysql():
                 )
             """)
             
+            # Eliminar datos existentes
+            cursor.execute("DELETE FROM empleados")
+            print("Datos eliminados en empleados (MySQL).")
+            
             # Insertar datos de ejemplo
             empleados = [
-                ('Pedro', '123456789', 'CC', 'Calle 123', None, 'Gerente', None),
+                (id_respaldo, 'Pedro', '123456789', 'CC', 'Calle 123', None, 'Gerente', None),
             ]
             
-            # Insertar datos si la tabla está vacía
-            cursor.execute("SELECT COUNT(*) FROM empleados")
-            if cursor.fetchone()[0] == 0:
-                cursor.executemany(
-                    "INSERT INTO empleados (nombre, numero_identidad, tipo_identidad, direccion, foto, cargo, hv) VALUES (%s, %s, %s, %s, %s, %s, %s)", empleados
-                )
-                print("Datos insertados correctamente en empleados (MySQL).")
-            else:
-                print("La base de datos ya contiene datos en empleados (MySQL).")
+            cursor.executemany(
+                "INSERT INTO empleados (id_Respaldo, nombre, numero_identidad, tipo_identidad, direccion, foto, cargo, hv) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", empleados
+            )
+            print("Datos insertados correctamente en empleados (MySQL).")
 
             conexion.commit()
             cursor.close()
@@ -109,26 +112,26 @@ def seed_database_mysql():
             conexion.close()
             print("Conexión MySQL cerrada.")
 
-def seed_database_mongo():
+def seed_database_mongo(id_respaldo):
     try:
         # Conexión a MongoDB
         client = MongoClient('mongodb://localhost:27017/')
         db = client['crud_db']
 
-        # Crear colección de usuarios
+        # Crear colección de empleados
         empleados = db['empleados']
-
+        
+        # Eliminar documentos existentes
+        empleados.delete_many({})
+        print("Datos eliminados en empleados (MongoDB).")
 
         # Insertar datos de ejemplo en la colección 'empleados'
         empleados_data = [
-            {'nombre': 'Pedro', 'numero_identidad': '123456789', 'tipo_identidad': 'CC', 'direccion': 'Calle 123', 'foto': None, 'cargo': 'Gerente', 'hv': None}
+            {'id_Respaldo': id_respaldo, 'nombre': 'Pedro', 'numero_identidad': '123456789', 'tipo_identidad': 'CC', 'direccion': 'Calle 123', 'foto': None, 'cargo': 'Gerente', 'hv': None}
         ]
-
-        if empleados.count_documents({}) == 0:
-            empleados.insert_many(empleados_data)
-            print("Datos insertados correctamente en empleados (MongoDB).")
-        else:
-            print("La base de datos ya contiene datos en empleados (MongoDB).")
+        
+        empleados.insert_many(empleados_data)
+        print("Datos insertados correctamente en empleados (MongoDB).")
 
         client.close()
 
@@ -139,5 +142,5 @@ def seed_database_mongo():
 
 if __name__ == "__main__":
     seed_database_login()
-    seed_database_mysql()
-    seed_database_mongo()
+    seed_database_mysql(id_respaldo)
+    seed_database_mongo(id_respaldo)
