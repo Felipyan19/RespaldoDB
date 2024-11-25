@@ -67,7 +67,8 @@ def seed_database_mysql(id_respaldo):
             port=3307,  
             user="crud_user",  
             password="crudpassword",  
-            database="crud_db"  
+            database="crud_db",
+            connect_timeout=2 
         )
 
         if conexion.is_connected():
@@ -115,7 +116,7 @@ def seed_database_mysql(id_respaldo):
 def seed_database_mongo(id_respaldo):
     try:
         # Conexión a MongoDB
-        client = MongoClient('mongodb://localhost:27017/')
+        client = MongoClient('mongodb://localhost:27017/',serverSelectionTimeoutMS=2000)
         db = client['crud_db']
 
         # Crear colección de empleados
