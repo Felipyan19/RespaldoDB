@@ -12,6 +12,7 @@ class DashboardScreen(QWidget):
         super().__init__()
         self.selected_data = None
         self.selected_edit_data = None
+        self.id_Respaldo = None
 
         self.tab_widget = QTabWidget(self)
 
@@ -147,8 +148,7 @@ class DashboardScreen(QWidget):
             self.populate_table()
         
     def update_selected_row_label(self):
-        print(self.selected_data)
-        print(self.selected_edit_data)
+
         if self.selected_data is not None:
             self.selected_row_label.setText(f"Actualizar registro # {self.selected_data["numero_identidad"]}")
             for key, value in self.selected_data.items():
@@ -173,6 +173,7 @@ class DashboardScreen(QWidget):
                 "cargo": df_final.iloc[row]["cargo"],
                 "hv": df_final.iloc[row]["hv"]
             }
+            self.id_Respaldo = df_final.iloc[row]["id_Respaldo"]
             self.tab_widget.setCurrentIndex(2) 
             self.update_selected_row_label()
 
@@ -270,7 +271,8 @@ class DashboardScreen(QWidget):
             "direccion": data_source["direccion"].text(),
             "cargo": data_source["cargo"].text(),
             "foto": f"data:image/jpeg;base64,{self.photo_data}" if self.photo_data else None,
-            "hv": f"data:application/pdf;base64,{self.hv_data}" if self.hv_data else None
+            "hv": f"data:application/pdf;base64,{self.hv_data}" if self.hv_data else None,
+            "id_Respaldo": self.id_Respaldo
         }
 
     def _validate_record(self, record):
