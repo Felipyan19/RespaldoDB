@@ -1,24 +1,23 @@
 import sys
 import mysql.connector
 import threading
-import time
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QStackedWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QStackedWidget, QMessageBox
+from PyQt5.QtGui import QIcon
 from login_screen import LoginScreen
 from dashboard_screen import DashboardScreen
 from model import sync_data
+from conect import conectar_login
 
 class LoginApp(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle('Login - PyQt')
-        self.setFixedSize(1200, 700)  
-        self.setStyleSheet("background-color: #f0f0f0;")  
+        self.setWindowTitle('Respaldo de Datos')
+        self.setWindowIcon(QIcon('./assets/2612467.png'))
 
         self.center()
 
         self.stacked_widget = QStackedWidget(self)
-
         self.login_screen = LoginScreen()
         self.dashboard_screen = DashboardScreen()
 
@@ -36,31 +35,29 @@ class LoginApp(QWidget):
         self.tarea_thread.start()
 
     def setup_login_screen(self):
-        """Configurar la pantalla de login"""
         def validar_login():
             usuario = self.login_screen.input_usuario.text()
             contrasena = self.login_screen.input_contrasena.text()
-
-            conexion = self.conectar_bd()
+            conexion = conectar_login()
             if conexion:
-                cursor = conexion.cursor()
-                consulta = "SELECT * FROM usuarios WHERE usuario = %s AND contrasena = %s"
-                cursor.execute(consulta, (usuario, contrasena))
+                try:
+                    cursor = conexion.cursor()
+                    consulta = "SELECT * FROM usuarios WHERE usuario = %s AND contrasena = %s"
+                    cursor.execute(consulta, (usuario, contrasena))
 
-                if cursor.fetchone():
-                    self.login_screen.mensaje_error.setText('Login exitoso!')
-                    self.login_screen.mensaje_error.setStyleSheet("color: green;")
-                    self.stacked_widget.setCurrentIndex(1)
-                else:
-                    self.login_screen.mensaje_error.setText('Usuario o contraseña incorrectos.')
-                    self.login_screen.mensaje_error.setStyleSheet("color: red;")
-                    self.login_screen.input_contrasena.clear() 
-                    
-                cursor.close()
-                conexion.close()
+                    if cursor.fetchone():
+                        self.show_message_box("¡Login exitoso!", f"Bienvenido, {usuario}.", QMessageBox.Information)
+                        self.stacked_widget.setCurrentIndex(1)
+                    else:
+                        self.show_message_box("Error", "Usuario o contraseña incorrectos.", QMessageBox.Critical)
+                        self.login_screen.input_contrasena.clear()
+                except mysql.connector.Error as e:
+                    self.show_message_box("Error", f"Error de base de datos: {e}", QMessageBox.Critical)
+                finally:
+                    cursor.close()
+                    conexion.close()
             else:
-                self.login_screen.mensaje_error.setText('Error al conectar con la base de datos.')
-                self.login_screen.mensaje_error.setStyleSheet("color: red;")
+                self.show_message_box("Error", "Error al conectar con la base de datos.", QMessageBox.Critical)
 
         self.login_screen.setup_login_function(validar_login)
 
@@ -68,24 +65,16 @@ class LoginApp(QWidget):
         """Configurar la pantalla después del login"""
         pass
 
-    def conectar_bd(self):
-        try:
-            conexion = mysql.connector.connect(
-                host="localhost",  
-                user="crud_user", 
-                password="crudpassword", 
-                database="crud_db" 
-            )
-            if conexion.is_connected():
-                print("Conexión exitosa a la base de datos.")
-                return conexion
-        except mysql.connector.Error as e:
-            print(f"Error al conectar a la base de datos: {e}")
-            return None
+    def show_message_box(self, title, message, icon):
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+        msg_box.setIcon(icon)
+        msg_box.exec_()
 
     def center(self):
         """Centra la ventana en la pantalla"""
-        screen = QApplication.desktop().screenGeometry()
+        screen = QApplication.primaryScreen().geometry()
         size = self.geometry()
         self.move((screen.width() - size.width()) // 2, (screen.height() - size.height()) // 2)
 

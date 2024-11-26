@@ -6,34 +6,9 @@ from pymongo import MongoClient, errors
 import uuid
 import pandas as pd
 from mysql.connector import Error
+from conect import conectar_mysql, conectar_mongo
 
 failed_records = pd.DataFrame(columns=["id_Respaldo", "nombre", "numero_identidad", "tipo_identidad", "direccion", "foto", "cargo", "hv", "error"])
-
-def conectar_mysql():
-    try:
-        conexion = mysql.connector.connect(
-            host="localhost",
-            port=3307,
-            user="crud_user",
-            password="crudpassword",
-            database="crud_db",
-            connect_timeout=2  
-        )
-        if conexion.is_connected():
-            return conexion
-    except Error as e:
-        print(f"Error al conectar a MySQL: {e}")
-        return None
-
-def conectar_mongo():
-    try:
-        client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=2000) 
-        db = client['crud_db'] 
-        client.admin.command('ping')
-        return db
-    except errors.ServerSelectionTimeoutError as e:
-        print(f"Error al conectar a MongoDB: {e}")
-        return None
 
 def fetch_data():
     try:

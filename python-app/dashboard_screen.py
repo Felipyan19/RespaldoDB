@@ -1,21 +1,25 @@
 import base64
 import io
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QTabWidget, QTableWidget, QTableWidgetItem, QGraphicsView, QGraphicsScene, QLineEdit, QPushButton, QMessageBox, QFileDialog
+from PyQt5.QtCore import QSize 
+from PyQt5.QtWidgets import QHBoxLayout, QWidget, QComboBox, QVBoxLayout, QLabel, QTabWidget, QTableWidget, QTableWidgetItem, QGraphicsView, QGraphicsScene, QLineEdit, QPushButton, QMessageBox, QFileDialog
+from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtSvg import QSvgRenderer
 from PyQt5.QtCore import Qt, QByteArray
-from PyQt5.QtGui import QPixmap
+import binascii 
 from model import fetch_data, insert_data, update_data
-import fitz  
 import re
 
 class DashboardScreen(QWidget):
     def __init__(self):
         super().__init__()
+        self.setStyleSheet(self.get_styles()) 
+
+        # Resto de tu código...
         self.selected_data = None
         self.selected_edit_data = None
-        self.id_Respaldo = None
+        self.id_Respaldo = None 
 
         self.tab_widget = QTabWidget(self)
-
         self.tab_1 = self.create_tab_1()  
         self.tab_2 = self.create_tab_2()  
         self.tab_3 = self.create_tab_3()  
@@ -27,8 +31,106 @@ class DashboardScreen(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(self.tab_widget)
         self.setLayout(layout)
-
         self.tab_widget.currentChanged.connect(self.on_tab_change)
+
+    def get_styles(self):
+        return """
+        QWidget {
+            background-color: #f0f4f8;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            color: #333333;
+        }
+        QTabWidget::pane {
+            border: none;
+            background: white;
+            border-radius: 5px;
+            padding: 6px;
+        }
+        QTabBar::tab {
+            background: #e1ecf7;
+            border: 1px solid #c0d9f1;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            padding: 15px 26px; 
+            font-size: 11px;
+            color: #1a73e8;
+        }
+        QTabBar::tab:selected {
+            background: #1a73e8;
+            color: white;
+            border-color: #1a73e8;
+            border: none;
+            text-decoration:none;
+        }
+        QLabel {
+            font-size: 10px;
+            font-weight: bold;
+            color: #444444;
+        }
+        QLineEdit {
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            padding: 8px;
+            font-size: 10px;
+            background-color: #f8f9fa;
+        }
+        QLineEdit:focus {
+            border-color: #80bdff;
+            background-color: #ffffff;
+        }
+        QPushButton {
+            background-color: #1a73e8;
+            color: white;
+            border: none;  
+            font-size: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 8px 16px;
+        }
+        QPushButton:hover {
+            background-color: #155cb0;
+        }
+        QPushButton:pressed {
+            background-color: #0e47a1;
+        }
+        QTableWidget {
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            gridline-color: #ced4da;
+            background-color: white;
+        }
+        QTableWidget::item {
+            padding: 6px;
+            color: #333333;
+        }
+        QHeaderView::section {
+            background-color: #1a73e8;
+            color: white;
+            font-weight: bold;
+            border: none;
+            padding: 6px;
+        }
+        QComboBox {
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            padding: 8px;
+            font-size: 10px;
+            background-color: #f8f9fa;
+        }
+        QComboBox:focus {
+            border-color: #80bdff;
+            background-color: #ffffff;
+        }
+        QComboBox::drop-down {
+            border-left: 1px solid #ced4da;
+        }
+        QComboBox::down-arrow {
+            image: url('./assets/seleccione.png');
+            width: 12px;  
+            height: 12px;  
+        }
+        """
         
     def create_tab_1(self):
         widget = QWidget()
@@ -47,115 +149,190 @@ class DashboardScreen(QWidget):
 
     def create_tab_2(self):
         widget = QWidget()
-        layout = QVBoxLayout()
 
-        # Crear un diccionario para almacenar todos los datos
+        main_layout = QHBoxLayout()
+        form_layout = QVBoxLayout()
+
         self.selected_data = {
             "nombre": QLineEdit(),
             "numero_identidad": QLineEdit(),
-            "tipo_identidad": QLineEdit(),
+            "tipo_identidad": QComboBox(),
             "direccion": QLineEdit(),
-            "foto": QLineEdit(),
-            "cargo": QLineEdit(),
-            "hv": QLineEdit()
+            "cargo": QComboBox()
         }
 
-        # Configurar el campo "nombre"
-        self.selected_data["nombre"].setPlaceholderText("Nombre")
-        layout.addWidget(self.selected_data["nombre"])
+        for key, field in self.selected_data.items():
+            label = QLabel(key.replace("_", " ").title())
+            form_layout.addWidget(label)
+            placeholder_text = key.replace("_", " ").title()  
+            if isinstance(field, QLineEdit):  
+                field.clear() 
+                field.setPlaceholderText(placeholder_text)  
+                form_layout.addWidget(field)
+            elif isinstance(field, QComboBox):  
+                field.clear()  
+                field.addItem(f"Seleccione {placeholder_text.lower()}")  
+                form_layout.addWidget(field)
 
-        # Configurar el campo "numero_identidad"
-        self.selected_data["numero_identidad"].setPlaceholderText("Número de Identidad")
-        layout.addWidget(self.selected_data["numero_identidad"])
+        self.selected_data["tipo_identidad"].addItems([
+            "Seleccione una opción", 
+            "Cédula de Ciudadanía",
+            "Tarjeta de Identidad",
+            "Pasaporte",
+            "Otro"
+        ])
 
-        # Configurar el campo "tipo_identidad"
-        self.selected_data["tipo_identidad"].setPlaceholderText("Tipo de Identidad")
-        layout.addWidget(self.selected_data["tipo_identidad"])
+        self.selected_data["tipo_identidad"].setCurrentIndex(0)
 
-        # Configurar el campo "direccion"
-        self.selected_data["direccion"].setPlaceholderText("Dirección")
-        layout.addWidget(self.selected_data["direccion"])
+        self.selected_data["cargo"].addItems([
+            "Seleccione un cargo",
+            "Administrador",
+            "Auxiliar",
+            "Monitor",
+            "Otro"
+        ])
+        self.selected_data["cargo"].setCurrentIndex(0)
 
-        # Configurar el campo "cargo"
-        self.selected_data["cargo"].setPlaceholderText("Cargo")
-        layout.addWidget(self.selected_data["cargo"])
+        form_layout.addSpacing(30)
 
-        # Botón para cargar foto
-        self.photo_data = None  # Para almacenar la foto en base64
-        self.photo_button = QPushButton("Cargar Foto")
-        self.photo_button.clicked.connect(self.load_photo)
-        layout.addWidget(self.photo_button)
-
-        # Botón para cargar HV (PDF)
-        self.hv_data = None  # Para almacenar el PDF en base64
-        self.hv_button = QPushButton("Cargar HV")
-        self.hv_button.clicked.connect(self.load_hv)
-        layout.addWidget(self.hv_button)
-
-        # Botón de enviar
         submit_button = QPushButton("Guardar Registro")
         submit_button.clicked.connect(self.save_record)
-        layout.addWidget(submit_button)
+        form_layout.addWidget(submit_button)
 
-        widget.setLayout(layout)
+        main_layout.addLayout(form_layout)
+
+        image_layout = QVBoxLayout()
+
+        self.photo_label = QLabel()
+        self.photo_label.setFixedSize(150, 150)
+        self.photo_label.setStyleSheet("border: 1px solid #ced4da;")
+        self.photo_label.setAlignment(Qt.AlignCenter)
+        image_layout.addWidget(self.photo_label)
+
+        self.photo_button = QPushButton("Cargar Foto")
+        self.photo_button.clicked.connect(self.load_photo)
+        image_layout.addWidget(self.photo_button)
+
+        self.hv_button = QPushButton("Cargar HV")
+        self.hv_button.clicked.connect(self.load_hv)
+        image_layout.addWidget(self.hv_button)
+
+        main_layout.addLayout(image_layout)  
+
+        widget.setLayout(main_layout)  
         return widget
 
     def create_tab_3(self):
-        
         widget = QWidget()
-        layout = QVBoxLayout()
+
+        main_layout = QHBoxLayout()
+        form_layout = QVBoxLayout()
 
         self.selected_edit_data = {
             "nombre": QLineEdit(),
             "numero_identidad": QLineEdit(),
-            "tipo_identidad": QLineEdit(),
+            "tipo_identidad": QComboBox(),
             "direccion": QLineEdit(),
-            "foto": QLineEdit(),
-            "cargo": QLineEdit(),
-            "hv": QLineEdit()
+            "cargo": QComboBox()
         }
 
-        self.photo_data = None  # Para almacenar la foto en base64
-        self.photo_button = QPushButton("Cargar Foto")
-        self.photo_button.clicked.connect(self.load_photo)
-        
-        # Botón para cargar HV (PDF)
-        self.hv_data = None  # Para almacenar el PDF en base64
-        self.hv_button = QPushButton("Cargar HV")
-        self.hv_button.clicked.connect(self.load_hv)
-        
-        self.selected_row_label = QLabel()
-        self.selected_row_label.setFixedSize(200, 15)
+        for key, field in self.selected_edit_data.items():
+            label = QLabel(key.replace("_", " ").title())
+            form_layout.addWidget(label)
+            placeholder_text = key.replace("_", " ").title()  
+            if isinstance(field, QLineEdit):  
+                field.clear() 
+                field.setPlaceholderText(placeholder_text)  
+                form_layout.addWidget(field)
+            elif isinstance(field, QComboBox):  
+                field.clear()  
+                field.addItem(f"Seleccione {placeholder_text.lower()}")  
+                form_layout.addWidget(field)
+
+        self.selected_edit_data["tipo_identidad"].addItems([
+            "Seleccione una opción", 
+            "Cédula de Ciudadanía",
+            "Tarjeta de Identidad",
+            "Pasaporte",
+            "Otro"
+        ])
+        self.selected_edit_data["tipo_identidad"].setCurrentIndex(0)
+
+        self.selected_edit_data["cargo"].addItems([
+            "Seleccione un cargo",
+            "Administrador",
+            "Auxiliar",
+            "Monitor",
+            "Otro"
+        ])
+        self.selected_edit_data["cargo"].setCurrentIndex(0)
+
+        form_layout.addSpacing(30)
 
         submit_button = QPushButton("Actualizar Registro")
         submit_button.clicked.connect(self.update_record)
+        form_layout.addWidget(submit_button)
 
-        layout.addWidget(self.selected_row_label)
-        if self.selected_data is not None:
-            layout.addWidget(self.selected_edit_data["nombre"])
-            layout.addWidget(self.selected_edit_data["numero_identidad"])
-            layout.addWidget(self.selected_edit_data["tipo_identidad"])
-            layout.addWidget(self.selected_edit_data["direccion"])
-            layout.addWidget(self.selected_edit_data["cargo"])
-            layout.addWidget(self.photo_button)
-            layout.addWidget(self.hv_button)
-            layout.addWidget(submit_button)
-        widget.setLayout(layout)
-        return widget  
+        main_layout.addLayout(form_layout)
+
+        image_layout = QVBoxLayout()
+
+        self.photo_label2 = QLabel()
+        self.photo_label2.setFixedSize(150, 150)
+        self.photo_label2.setStyleSheet("border: 1px solid #ced4da;")
+        self.photo_label2.setAlignment(Qt.AlignCenter)
+        image_layout.addWidget(self.photo_label2)
+
+        self.photo_button = QPushButton("Cargar Foto")
+        self.photo_button.clicked.connect(self.load_photo)
+        image_layout.addWidget(self.photo_button)
+
+        self.hv_button = QPushButton("Cargar HV")
+        self.hv_button.clicked.connect(self.load_hv)
+        image_layout.addWidget(self.hv_button)
+    
+        main_layout.addLayout(image_layout)  
+        widget.setLayout(main_layout)  
+        return widget
 
     def on_tab_change(self, index):
         if index == 0:
             self.populate_table()
-        
-    def update_selected_row_label(self):
+        if index == 1:
+            self.update_selected_row_label(1)        
+    def update_selected_row_label(self,index=0):   
 
-        if self.selected_data is not None:
-            self.selected_row_label.setText(f"Actualizar registro # {self.selected_data["numero_identidad"]}")
-            for key, value in self.selected_data.items():
-                self.selected_edit_data[key].setText(value)
-        else:
-            self.selected_row_label.setText("No se ha seleccionado ninguna fila")
-    
+        if index == 1:
+            self.selected_data["nombre"].setText("")
+            self.selected_data["numero_identidad"].setText("")
+            self.selected_data["tipo_identidad"].setCurrentIndex(0)
+            self.selected_data["direccion"].setText("")
+            self.selected_data["cargo"].setCurrentIndex(0)
+            self.photo_label.setPixmap(QPixmap())
+            self.photo_data = None
+            self.hv_data = None
+            return
+
+        if self.selected_data is not None and index == 2:
+            
+            self.selected_edit_data["nombre"].setText(self.selected_data["nombre"])
+            self.selected_edit_data["numero_identidad"].setText(self.selected_data["numero_identidad"])
+            self.selected_edit_data["tipo_identidad"].setCurrentText(self.selected_data["tipo_identidad"])
+            self.selected_edit_data["direccion"].setText(self.selected_data["direccion"])
+            self.selected_edit_data["cargo"].setCurrentText(self.selected_data["cargo"])
+            if self.selected_data["foto"] is not None:
+                img_data = self.selected_data["foto"].split(',')[1]
+                padding = '=' * (4 - len(img_data) % 4) 
+                img_data = base64.b64decode(img_data + padding) 
+                pixmap = QPixmap()
+                pixmap.loadFromData(QByteArray(img_data)) 
+                pixmap = pixmap.scaled(self.photo_label2.width(), self.photo_label2.height(),
+                                    Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+                self.photo_label2.setPixmap(pixmap)
+            if self.selected_data["hv"] is not None: 
+                self.hv_button.setStyleSheet("background-color: #28a745; color: white;")
+                  
     def populate_table(self):
         df_final = fetch_data()
 
@@ -175,7 +352,7 @@ class DashboardScreen(QWidget):
             }
             self.id_Respaldo = df_final.iloc[row]["id_Respaldo"]
             self.tab_widget.setCurrentIndex(2) 
-            self.update_selected_row_label()
+            self.update_selected_row_label(2)
 
         for i in range(df_final.shape[0]):
             for j in range(df_final.shape[1]):
@@ -219,7 +396,11 @@ class DashboardScreen(QWidget):
                 else:
                     self.table.setItem(i, j, QTableWidgetItem(cell_value))
 
-            action_button = QPushButton("Ver Detalles")
+            action_button = QPushButton()
+            icon = QIcon("./assets/1159633.png") 
+            action_button.setIcon(icon)
+            action_button.setIconSize(QSize(10, 10)) 
+
             action_button.clicked.connect(lambda checked, row=i: handle_details(row))
 
             self.table.setCellWidget(i, df_final.shape[1], action_button) 
@@ -245,6 +426,9 @@ class DashboardScreen(QWidget):
     def load_photo(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Seleccionar Foto", "", "Images (*.png *.jpg *.jpeg)")
         if file_path:
+            pixmap = QPixmap(file_path)
+            self.photo_label.setPixmap(pixmap.scaled(self.photo_label.width(), self.photo_label.height(), Qt.KeepAspectRatio))
+            self.photo_label2.setPixmap(pixmap.scaled(self.photo_label2.width(), self.photo_label2.height(), Qt.KeepAspectRatio))
             with open(file_path, "rb") as f:
                 self.photo_data = base64.b64encode(f.read()).decode('utf-8')
             QMessageBox.information(self, "Foto Cargada", "La foto se ha cargado correctamente.")
@@ -255,6 +439,12 @@ class DashboardScreen(QWidget):
             with open(file_path, "rb") as f:
                 self.hv_data = base64.b64encode(f.read()).decode('utf-8')
             self.hv_name = file_path.split("/")[-1]
+
+            if self.hv_data:  
+                self.hv_button.setStyleSheet("background-color: #28a745; color: white;")
+            else:  
+                self.hv_button.setStyleSheet("background-color: #f8f9fa; color: black;")
+
             QMessageBox.information(self, "HV Cargada", "La hoja de vida se ha cargado correctamente.")
 
     def save_record(self):
@@ -267,9 +457,9 @@ class DashboardScreen(QWidget):
         return {
             "nombre": data_source["nombre"].text(),
             "numero_identidad": data_source["numero_identidad"].text(),
-            "tipo_identidad": data_source["tipo_identidad"].text(),
+            "tipo_identidad": data_source["tipo_identidad"].currentText(),
             "direccion": data_source["direccion"].text(),
-            "cargo": data_source["cargo"].text(),
+            "cargo": data_source["cargo"].currentText(),
             "foto": f"data:image/jpeg;base64,{self.photo_data}" if self.photo_data else None,
             "hv": f"data:application/pdf;base64,{self.hv_data}" if self.hv_data else None,
             "id_Respaldo": self.id_Respaldo
