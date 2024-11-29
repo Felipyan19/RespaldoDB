@@ -259,5 +259,5 @@ def sync_data():
             procesar_registros_mysql()
             procesar_registros_mongo()
         
-        time.sleep(60)
+        time.sleep(10)
 
