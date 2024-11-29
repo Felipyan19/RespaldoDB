@@ -33,16 +33,16 @@ El objetivo principal del proyecto es crear una herramienta visual en Python con
 
 1. **Clonar el repositorio**:
 
-  <!-- ```bash  -->
+    ```bash   
   git clone https://github.com/tuusuario/respaldo-bases-datos.git
   cd respaldo-bases-datos
-  <!-- ```  -->
+    ```   
 
 2. **Levantar los servicios de bases de datos**: Ejecuta el siguiente comando para levantar los contenedores de **MySQL** y **MongoDB** usando Docker Compose.
 
-  <!-- ```bash  -->
+    ```bash   
   docker-compose up --build
-  <!-- ```  -->
+    ```   
 
 Esto levantará los contenedores con las bases de datos necesarias. 🚀
 
@@ -65,44 +65,44 @@ Para ejecutar la aplicación con Docker Compose:
 
 1. **Levanta los contenedores de las bases de datos** usando Docker Compose:
 
-  <!-- ```bash  -->
+    ```bash   
   docker-compose up --build
-  <!-- ```  -->
+    ```   
 
 2. **Configurar el Entorno Virtual de Python**:
 
    - Crea un entorno virtual:
-     <!-- ```bash  -->
+       ```bash   
      python -m venv venv
-     <!-- ```  -->
+       ```   
 
    - Activa el entorno virtual:
      - En Windows:
-       <!-- ```bash  -->
+         ```bash   
        venv\Scripts\activate
-       <!-- ```  -->
+         ```   
      - En macOS/Linux:
-       <!-- ```bash  -->
+         ```bash   
        source venv/bin/activate
-       <!-- ```  -->
+         ```   
 
 3. **Instalar las dependencias de Python**:
 
-  <!-- ```bash  -->
+    ```bash   
   pip install -r python-app/requirements.txt
-  <!-- ```  -->
+    ```   
 
 4. **Inicializar la Base de Datos**: Antes de comenzar a usar la aplicación, asegúrate de inicializar las bases de datos ejecutando el archivo `seed_database.py`. Este paso es esencial para configurar la base de datos con datos iniciales.
 
-  <!-- ```bash  -->
+    ```bash   
   python python-app/seed_database.py
-  <!-- ```  -->
+    ```   
 
 5. **Ejecutar la aplicación Python**:
 
-  <!-- ```bash  -->
+    ```bash   
   python python-app/app.py
-  <!-- ```  -->
+    ```   
 
 ---
 
@@ -110,7 +110,7 @@ Para ejecutar la aplicación con Docker Compose:
 
 La estructura del proyecto es la siguiente:
 
-  <!-- ```bash  -->
+    ```bash   
 respaldosDB/
 │
 ├── python-app/
@@ -123,7 +123,7 @@ respaldosDB/
 │   └── requirements.txt
 │
 └── docker-compose.yml
-  <!-- ```  -->
+    ```   
 
 - **python-app/**: Contiene los scripts de la aplicación Python.
   - **app.py**: Script principal para la ejecución de la aplicación. 🚀
