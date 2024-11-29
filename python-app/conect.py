@@ -1,5 +1,6 @@
 import mysql.connector
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
+from mysql.connector import Error
 import pandas as pd
 
 def conectar_login():
@@ -39,7 +40,7 @@ def conectar_mongo():
         db = client['crud_db'] 
         client.admin.command('ping')
         return db
-    except errors.ServerSelectionTimeoutError as e:
+    except errors.ServerSelectionTimeoutError as e: 
         print(f"Error al conectar a MongoDB: {e}")
         return None
 
