@@ -33,30 +33,18 @@ El objetivo principal del proyecto es crear una herramienta visual en Python con
 
 1. **Clonar el repositorio**:
 
-  ```bash 
-git clone https://github.com/tuusuario/respaldo-bases-datos.git
-cd respaldo-bases-datos
-  ``` 
+  <!-- ```bash  -->
+  git clone https://github.com/tuusuario/respaldo-bases-datos.git
+  cd respaldo-bases-datos
+  <!-- ```  -->
 
 2. **Levantar los servicios de bases de datos**: Ejecuta el siguiente comando para levantar los contenedores de **MySQL** y **MongoDB** usando Docker Compose.
 
-  ```bash 
-docker-compose up --build
-  ``` 
+  <!-- ```bash  -->
+  docker-compose up --build
+  <!-- ```  -->
 
 Esto levantará los contenedores con las bases de datos necesarias. 🚀
-
-3. **Instalar las dependencias de Python**: Asegúrate de tener un entorno Python configurado localmente, y luego instala las dependencias necesarias.
-
-  ```bash 
-pip install -r python-app/requirements.txt
-  ``` 
-
-4. **Ejecutar la aplicación Python**: Ejecuta el archivo `app.py` para iniciar la aplicación.
-
-  ```bash 
-python python-app/app.py
-  ``` 
 
 La aplicación se conectará automáticamente a las bases de datos levantadas por Docker Compose y te permitirá gestionar los respaldos de las bases de datos. 📂
 
@@ -77,21 +65,44 @@ Para ejecutar la aplicación con Docker Compose:
 
 1. **Levanta los contenedores de las bases de datos** usando Docker Compose:
 
-  ```bash 
-docker-compose up --build
-  ``` 
+  <!-- ```bash  -->
+  docker-compose up --build
+  <!-- ```  -->
 
-2. **Instala las dependencias** de Python:
+2. **Configurar el Entorno Virtual de Python**:
 
-  ```bash 
-pip install -r python-app/requirements.txt
-  ``` 
+   - Crea un entorno virtual:
+     <!-- ```bash  -->
+     python -m venv venv
+     <!-- ```  -->
 
-3. **Ejecuta la aplicación Python** localmente:
+   - Activa el entorno virtual:
+     - En Windows:
+       <!-- ```bash  -->
+       venv\Scripts\activate
+       <!-- ```  -->
+     - En macOS/Linux:
+       <!-- ```bash  -->
+       source venv/bin/activate
+       <!-- ```  -->
 
-  ```bash 
-python python-app/app.py
-  ``` 
+3. **Instalar las dependencias de Python**:
+
+  <!-- ```bash  -->
+  pip install -r python-app/requirements.txt
+  <!-- ```  -->
+
+4. **Inicializar la Base de Datos**: Antes de comenzar a usar la aplicación, asegúrate de inicializar las bases de datos ejecutando el archivo `seed_database.py`. Este paso es esencial para configurar la base de datos con datos iniciales.
+
+  <!-- ```bash  -->
+  python python-app/seed_database.py
+  <!-- ```  -->
+
+5. **Ejecutar la aplicación Python**:
+
+  <!-- ```bash  -->
+  python python-app/app.py
+  <!-- ```  -->
 
 ---
 
@@ -99,7 +110,7 @@ python python-app/app.py
 
 La estructura del proyecto es la siguiente:
 
-  ```bash 
+  <!-- ```bash  -->
 respaldosDB/
 │
 ├── python-app/
@@ -107,16 +118,20 @@ respaldosDB/
 │   ├── conect.py
 │   ├── dashboard_screen.py
 │   ├── login_screen.py
+│   ├── model.py
+│   ├── seed_database.py
 │   └── requirements.txt
 │
 └── docker-compose.yml
-  ``` 
+  <!-- ```  -->
 
 - **python-app/**: Contiene los scripts de la aplicación Python.
   - **app.py**: Script principal para la ejecución de la aplicación. 🚀
   - **conect.py**: Contiene la lógica de conexión con las bases de datos MySQL y MongoDB. 🔌
   - **dashboard_screen.py**: Pantalla principal donde se gestionan los respaldos de bases de datos. 📊
   - **login_screen.py**: Pantalla de inicio de sesión. 🔑
+  - **model.py**: Maneja las operaciones de las bases de datos, incluyendo consultas, actualizaciones y sincronización. 🛠️
+  - **seed_database.py**: Script para inicializar la base de datos. 🌱
   - **requirements.txt**: Archivo de dependencias de Python. 📜
 
 - **docker-compose.yml**: Define los servicios para levantar las bases de datos **MySQL** y **MongoDB**. 🛠️
@@ -154,4 +169,3 @@ Este proyecto está bajo la **Licencia MIT**. Puedes ver más detalles en el arc
 ## 🎉 ¡Gracias por usar este proyecto!
 
 Si tienes alguna pregunta o sugerencia, no dudes en abrir un **issue** o **pull request**. ¡Estaré encantado de ayudarte! 😄
-
